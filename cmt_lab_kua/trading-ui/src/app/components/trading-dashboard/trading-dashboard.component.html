@@ -1,0 +1,198 @@
+<div class="dashboard-container">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1>Capital Market Simulator</h1>
+      <p class="subtitle">Real-time Order & Execution Management</p>
+    </div>
+    <div class="header-controls">
+      <div class="status-indicator" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+        <span class="status-dot"></span>
+        <span class="status-text">{{ isConnected ? 'Connected' : 'Disconnected' }}</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Unified Statistics -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value">{{ orders.length }}</div>
+        <div class="stat-sublabel">{{ buyCount }} buy | {{ sellCount }} sell</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">💱</div>
+      <div class="stat-content">
+        <div class="stat-label">Executions</div>
+        <div class="stat-value">{{ executions.length }}</div>
+        <div class="stat-sublabel">{{ totalSharesTraded | number:'1.0-0' }} shares</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-content">
+        <div class="stat-label">Trade Value</div>
+        <div class="stat-value">${{ (totalTradeValue | number:'1.2-2') }}</div>
+        <div class="stat-sublabel">Avg: ${{ (getAveragePrice() | number:'1.2-2') }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <div class="stat-label">Order Notional</div>
+        <div class="stat-value">${{ (getTotalOrderNotional() | number:'1.2-2') }}</div>
+        <div class="stat-sublabel">All pending orders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'orders'"
+      (click)="switchTab('orders')">
+      <span class="tab-icon">📋</span>
+      Orders ({{ orders.length }})
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'executions'"
+      (click)="switchTab('executions')">
+      <span class="tab-icon">✅</span>
+      Executions ({{ executions.length }})
+    </button>
+  </div>
+
+  <!-- Orders Tab Content -->
+  <div class="tab-content" *ngIf="activeTab === 'orders'">
+    <div class="tab-header">
+      <h2>Live Orders</h2>
+      <button class="clear-btn" (click)="clearOrders()" [disabled]="orders.length === 0">
+        Clear Orders
+      </button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Symbol</th>
+            <th>Side</th>
+            <th>Type</th>
+            <th class="text-right">Qty</th>
+            <th class="text-right">Cum Qty</th>
+            <th class="text-right">Leaves Qty</th>
+            <th class="text-right">Price</th>
+            <th class="text-right">Last Px</th>
+            <th>Status</th>
+            <th>Exec Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="orders.length === 0" class="empty-row">
+            <td colspan="10">
+              <div class="empty-state">
+                <p>No orders yet. Send NewOrderSingle from MiniFix client...</p>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let order of orders; let i = index" 
+              class="order-row" 
+              [class.new]="i === 0"
+              [ngClass]="getStatusClass(order.ordStatus)">
+            <td class="order-id">{{ order.clOrdID }}</td>
+            <td class="symbol">{{ order.symbol }}</td>
+            <td class="side" [ngClass]="getSideColor(order.side)">
+              <span class="side-badge">{{ getSideLabel(order.side) }}</span>
+            </td>
+            <td class="order-type">
+              <span class="type-badge">{{ getOrderTypeLabel(order.ordType) }}</span>
+            </td>
+            <td class="text-right">{{ order.quantity | number:'1.0-0' }}</td>
+            <td class="text-right cum-qty">{{ (order.cumQty || 0) | number:'1.0-0' }}</td>
+            <td class="text-right leaves-qty">{{ (order.leavesQty !== undefined ? order.leavesQty : order.quantity) | number:'1.0-0' }}</td>
+            <td class="text-right">${{ order.price | number:'1.2-2' }}</td>
+            <td class="text-right">{{ order.lastPx ? formatPrice(order.lastPx) : '—' }}</td>
+            <td><span class="status-badge" [ngClass]="getStatusClass(order.ordStatus)">{{ getStatusLabel(order.ordStatus) }}</span></td>
+            <td class="exec-type">{{ order.execType || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Executions Tab Content -->
+  <div class="tab-content" *ngIf="activeTab === 'executions'">
+    <div class="tab-header">
+      <h2>Executed Trades</h2>
+      <button class="clear-btn" (click)="clearExecutions()" [disabled]="executions.length === 0">
+        Clear Executions
+      </button>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Exec ID</th>
+            <th>Symbol</th>
+            <th>Buy Order</th>
+            <th>Sell Order</th>
+            <th class="text-right">Qty</th>
+            <th class="text-right">Price</th>
+            <th class="text-right">Value</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="executions.length === 0" class="empty-row">
+            <td colspan="8">
+              <div class="empty-state">
+                <p>No executions yet. Send orders to trigger matching...</p>
+              </div>
+            </td>
+          </tr>
+          <tr *ngFor="let exec of executions; let i = index" class="exec-row" [class.new]="i === 0">
+            <td class="exec-id">{{ exec.execId }}</td>
+            <td class="symbol">{{ exec.symbol }}</td>
+            <td class="order-ref">{{ exec.buyClOrdId }}</td>
+            <td class="order-ref">{{ exec.sellClOrdId }}</td>
+            <td class="text-right">{{ exec.execQty | number:'1.0-0' }}</td>
+            <td class="text-right exec-price">${{ formatPrice(exec.execPrice) }}</td>
+            <td class="text-right exec-value">${{ ((exec.execQty * exec.execPrice) | number:'1.2-2') }}</td>
+            <td class="exec-time">{{ formatTime(exec.execTime) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Execution Statistics -->
+    <div class="execution-stats">
+      <div class="exec-stat">
+        <span class="label">Total Shares:</span>
+        <span class="value">{{ totalSharesTraded | number:'1.0-0' }}</span>
+      </div>
+      <div class="exec-stat">
+        <span class="label">Total Value:</span>
+        <span class="value">${{ (totalTradeValue | number:'1.2-2') }}</span>
+      </div>
+      <div class="exec-stat">
+        <span class="label">Average Price:</span>
+        <span class="value">${{ (getAveragePrice() | number:'1.2-2') }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="dashboard-footer">
+    <p>Connected to: <code>ws://localhost:8080</code> | Data updates in real-time</p>
+  </footer>
+</div>

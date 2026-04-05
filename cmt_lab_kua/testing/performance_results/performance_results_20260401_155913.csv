@@ -1,0 +1,4 @@
+Test Number,Orders Sent,Mode,Throughput (orders/sec),Avg Latency (µs),Min Latency (µs),Max Latency (µs),Total Time (seconds)
+1,100,burst,4570.55,500.00,300.00,1000.00,0.02
+2,500,burst,2829.05,500.00,300.00,1000.00,0.18
+3,1000,burst,2.22,450450.45,270270.27,900900.90,0.45

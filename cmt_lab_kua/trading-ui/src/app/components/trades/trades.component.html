@@ -1,0 +1,67 @@
+<div class="trades-container">
+  <div class="header">
+    <h2>Live Trades (Executions)</h2>
+    <div class="connection-status" [class.connected]="isConnected">
+      <span class="status-indicator"></span>
+      {{ isConnected ? 'Connected' : 'Disconnected' }}
+    </div>
+  </div>
+
+  <div class="statistics">
+    <div class="stat-box">
+      <div class="stat-label">Total Trades</div>
+      <div class="stat-value">{{ trades.length }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Shares</div>
+      <div class="stat-value">{{ totalShares | number: '1.0-0' }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Avg Price</div>
+      <div class="stat-value">{{ getAveragePrice() }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Value</div>
+      <div class="stat-value">{{ formatTotalValue() }}</div>
+    </div>
+  </div>
+
+  <div class="actions">
+    <button (click)="clearTrades()" class="btn-clear">Clear Trades</button>
+  </div>
+
+  <div class="table-container">
+    <table class="trades-table" *ngIf="trades.length > 0; else noTrades">
+      <thead>
+        <tr>
+          <th>Exec ID</th>
+          <th>Symbol</th>
+          <th>Buy Order</th>
+          <th>Sell Order</th>
+          <th>Shares</th>
+          <th>Price</th>
+          <th>Trade Value</th>
+          <th>Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let trade of trades" class="trade-row">
+          <td class="exec-id">{{ trade.execId }}</td>
+          <td class="symbol"><strong>{{ trade.symbol }}</strong></td>
+          <td class="order-id">{{ trade.buyClOrdId }}</td>
+          <td class="order-id">{{ trade.sellClOrdId }}</td>
+          <td class="shares">{{ trade.execQty | number: '1.0-0' }}</td>
+          <td class="price">{{ formatPrice(trade.execPrice) }}</td>
+          <td class="value">{{ formatPrice(tradeValue(trade)) }}</td>
+          <td class="time">{{ formatTime(trade.execTime) }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <ng-template #noTrades>
+      <div class="empty-state">
+        <p>No trades executed yet. Waiting for orders to match...</p>
+      </div>
+    </ng-template>
+  </div>
+</div>

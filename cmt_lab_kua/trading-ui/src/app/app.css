@@ -1,0 +1,62 @@
+.app-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px;
+}
+
+.app-header {
+  background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+.app-header h1 {
+  margin: 0 0 10px 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.app-header .subtitle {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+  font-style: italic;
+}
+
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.section-orders {
+  margin-bottom: 30px;
+}
+
+.section-trades {
+  margin-bottom: 30px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 10px;
+  }
+
+  .app-header {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .app-header h1 {
+    font-size: 24px;
+  }
+
+  .app-header .subtitle {
+    font-size: 12px;
+  }
+}
