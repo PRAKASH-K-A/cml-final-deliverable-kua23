@@ -1,20 +1,37 @@
 package com.stocker;
 
-import quickfix.Application;
-import quickfix.Message;
-import quickfix.Session;
-import quickfix.SessionID;
-import quickfix.DoNotSend;
-import quickfix.FieldNotFound;
-import quickfix.IncorrectDataFormat;
-import quickfix.IncorrectTagValue;
-import quickfix.RejectLogon;
-import quickfix.UnsupportedMessageType;
-import quickfix.field.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+
+import quickfix.Application;
+import quickfix.DoNotSend;
+import quickfix.FieldNotFound;
+import quickfix.IncorrectDataFormat;
+import quickfix.IncorrectTagValue;
+import quickfix.Message;
+import quickfix.RejectLogon;
+import quickfix.Session;
+import quickfix.SessionID;
+import quickfix.UnsupportedMessageType;
+import quickfix.field.AvgPx;
+import quickfix.field.ClOrdID;
+import quickfix.field.CumQty;
+import quickfix.field.ExecID;
+import quickfix.field.ExecType;
+import quickfix.field.LastPx;
+import quickfix.field.LastQty;
+import quickfix.field.LeavesQty;
+import quickfix.field.MsgType;
+import quickfix.field.OrdStatus;
+import quickfix.field.OrdType;
+import quickfix.field.OrderID;
+import quickfix.field.OrderQty;
+import quickfix.field.Price;
+import quickfix.field.Side;
+import quickfix.field.Symbol;
+import quickfix.field.Text;
 
 public class OrderApplication implements Application {
     
@@ -22,12 +39,14 @@ public class OrderApplication implements Application {
     private final BlockingQueue<Order> dbQueue;
     private final Map<String, Security> validSecurities;
     private final Map<String, OrderBook> orderBooks;  // One book per symbol
+    private final OptionPricingService optionPricingService;  // LAB 11: Option pricing
     
     public OrderApplication(OrderBroadcaster broadcaster, BlockingQueue<Order> dbQueue) {
         this.broadcaster = broadcaster;
         this.dbQueue = dbQueue;
         this.validSecurities = DatabaseManager.loadSecurityMaster();
         this.orderBooks = new ConcurrentHashMap<>();  // Thread-safe order book registry
+        this.optionPricingService = new OptionPricingService(broadcaster);  // LAB 11: Initialize option pricing
         System.out.println("[ORDER SERVICE] Security Master loaded: " + validSecurities.size() + " valid symbols");
         System.out.println("[ORDER BOOKS] Exchange initialized - Ready for matching");
     }
@@ -216,6 +235,11 @@ public class OrderApplication implements Application {
                 broadcaster.broadcastExecution(exec);
                 // Queue execution for persistence
                 broadcaster.queueExecutionForPersistence(exec);
+                
+                // ===== LAB 11: UPDATE OPTION PRICES =====
+                // After each trade (execution), recalculate option prices for the symbol
+                // The spot price has changed, so option Greeks and prices change too
+                optionPricingService.updateSpotPrice(exec.getSymbol(), exec.getExecPrice(), exec.getExecQty());
             }
             
             // 8. Broadcast to Angular UI via WebSocket (Real-time update)

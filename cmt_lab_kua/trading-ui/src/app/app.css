@@ -2,6 +2,35 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/**
+ * LAB 11: Layout for Trading Dashboard + Option Pricing Dashboard
+ * Stack vertically on mobile, side-by-side on desktop
+ */
+app-trading-dashboard {
+  flex: 1;
+}
+
+app-option-pricing-dashboard {
+  flex: 1;
+}
+
+@media (min-width: 1600px) {
+  .app-container {
+    flex-direction: row;
+  }
+
+  app-trading-dashboard {
+    flex: 0.5;
+  }
+
+  app-option-pricing-dashboard {
+    flex: 0.5;
+  }
 }
 
 .app-header {

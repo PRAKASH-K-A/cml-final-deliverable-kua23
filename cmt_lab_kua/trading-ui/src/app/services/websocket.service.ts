@@ -47,6 +47,27 @@ export interface Execution {
 }
 
 /**
+ * LAB 11: OptionPrice interface - represents option pricing data
+ */
+export interface OptionPrice {
+  symbol: string;
+  spotPrice: number;
+  strikePrice: number;
+  callPrice: number;
+  putPrice: number;
+  delta: number;
+  gamma: number;
+  vega: number;
+  theta: number;
+  rho: number;
+  volatility: number;
+  timeToExpiration: number;
+  timestamp: string;
+  lastTradeQty: number;
+  lastTradePrice: number;
+}
+
+/**
  * WebSocketService - Manages real-time connection to Java Order Service
  * 
  * This service establishes a persistent WebSocket connection to the backend
@@ -61,6 +82,7 @@ export class WebsocketService {
   // Subjects for different message types
   public orders: Subject<Order> = new Subject<Order>();
   public executions: Subject<Execution> = new Subject<Execution>();
+  public optionPrices: Subject<OptionPrice> = new Subject<OptionPrice>();  // LAB 11
   
   // Legacy support
   public messages: Subject<Order> = this.orders;
@@ -100,7 +122,14 @@ export class WebsocketService {
             const execution = data.data as Execution;
             console.log('[WEBSOCKET] Parsed execution:', execution);
             this.executions.next(execution);
-          } else {
+          } 
+          // LAB 11: Check if this is an option price message
+          else if (data.type === 'option_price' && data.data) {
+            const optionPrice = data.data as OptionPrice;
+            console.log('[LAB 11] Parsed option price:', optionPrice);
+            this.optionPrices.next(optionPrice);
+          }
+          else {
             // Treat as order message
             const order = data as Order;
             console.log('[WEBSOCKET] Parsed order:', order);
@@ -144,6 +173,13 @@ export class WebsocketService {
    */
   getExecutions(): Observable<Execution> {
     return this.executions.asObservable();
+  }
+
+  /**
+   * LAB 11: Get the option prices Observable
+   */
+  getOptionPrices(): Observable<OptionPrice> {
+    return this.optionPrices.asObservable();
   }
 
   /**

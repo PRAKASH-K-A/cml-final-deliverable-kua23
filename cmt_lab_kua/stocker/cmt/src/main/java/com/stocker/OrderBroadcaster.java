@@ -1,14 +1,15 @@
 package com.stocker;
 
-import org.java_websocket.server.WebSocketServer;
+import java.net.InetSocketAddress;
+import java.time.Instant;
+
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.server.WebSocketServer;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSerializer;
-import java.net.InetSocketAddress;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
 
 /**
  * OrderBroadcaster - WebSocket Server for Real-time Order Broadcasting
@@ -166,5 +167,33 @@ public class OrderBroadcaster extends WebSocketServer {
                 e.printStackTrace();
             }
         }).start();
+    }
+    
+    /**
+     * LAB 11: Broadcast option pricing data to all connected UI clients
+     * 
+     * Called whenever option prices are recalculated based on a new trade execution.
+     * Option prices are extremely sensitive to the underlying spot price, so they update
+     * in real-time as trades occur.
+     * 
+     * @param optionData The OptionPrice object containing call/put prices and Greeks
+     */
+    public void broadcastOptionPrice(OptionPrice optionData) {
+        try {
+            // Convert OptionPrice object to JSON string with a type marker for UI routing
+            String json = "{\"type\":\"option_price\"," + 
+                         "\"data\":" + gson.toJson(optionData) + "}";
+            
+            // Send to all connected UIs
+            broadcast(json);
+            
+            System.out.println(String.format(
+                    "[LAB 11] Broadcast Option | Symbol: %s | Call: $%.2f | Put: $%.2f | Clients: %d",
+                    optionData.getSymbol(), optionData.getCallPrice(), optionData.getPutPrice(),
+                    getConnections().size()));
+        } catch (Exception e) {
+            System.err.println("[WEBSOCKET] ERROR: Failed to broadcast option price - " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }
